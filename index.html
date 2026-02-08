@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queoval × n8n — Automatisation Formation</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { mono: ['JetBrains Mono', 'monospace'], sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        lime: { 400: '#a3e635', 500: '#84cc16' },
+        brutal: { yellow: '#FFE600', pink: '#FF6B9D', blue: '#0055FF', green: '#00DC82', orange: '#FF6D00', purple: '#8B5CF6', red: '#EF4444', cyan: '#06B6D4' }
+      },
+      boxShadow: { brutal: '4px 4px 0px 0px #000', 'brutal-lg': '6px 6px 0px 0px #000', 'brutal-xl': '8px 8px 0px 0px #000', 'brutal-hover': '2px 2px 0px 0px #000' },
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
+        'float-delayed': 'float 6s ease-in-out 2s infinite',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'slide-up': 'slideUp 0.6s ease-out forwards',
+        'slide-in-left': 'slideInLeft 0.6s ease-out forwards',
+        'slide-in-right': 'slideInRight 0.6s ease-out forwards',
+        'count-up': 'countUp 2s ease-out forwards',
+        'bounce-in': 'bounceIn 0.5s ease-out forwards',
+        'typewriter': 'typewriter 3s steps(40) forwards',
+        'marquee': 'marquee 30s linear infinite',
+        'spin-slow': 'spin 8s linear infinite',
+      }
+    }
+  }
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes bounceIn { 0% { opacity:0; transform: scale(0.3); } 50% { transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { opacity:1; transform: scale(1); } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes countUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes grain { 0%,100% { transform: translate(0,0) } 10% { transform: translate(-5%,-10%) } 30% { transform: translate(3%,-15%) } 50% { transform: translate(-15%,5%) } 70% { transform: translate(8%,10%) } 90% { transform: translate(-10%,5%) } }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #FAFAF9; color: #1a1a1a; overflow-x: hidden; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Neobrutalist core */
+.neo-border { border: 3px solid #000; }
+.neo-border-2 { border: 2px solid #000; }
+.neo-shadow { box-shadow: 4px 4px 0px 0px #000; }
+.neo-shadow-lg { box-shadow: 6px 6px 0px 0px #000; }
+.neo-shadow-xl { box-shadow: 8px 8px 0px 0px #000; }
+.neo-btn { border: 3px solid #000; box-shadow: 4px 4px 0px 0px #000; transition: all 0.15s ease; cursor: pointer; font-weight: 700; }
+.neo-btn:hover { box-shadow: 2px 2px 0px 0px #000; transform: translate(2px, 2px); }
+.neo-btn:active { box-shadow: 0px 0px 0px 0px #000; transform: translate(4px, 4px); }
+.neo-card { border: 3px solid #000; box-shadow: 6px 6px 0px 0px #000; transition: all 0.25s ease; }
+.neo-card:hover { box-shadow: 8px 8px 0px 0px #000; transform: translate(-2px, -2px); }
+
+/* Scroll animations */
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-left { opacity: 0; transform: translateX(-50px); transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-right { opacity: 0; transform: translateX(50px); transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+.reveal-scale { opacity: 0; transform: scale(0.8); transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+.stagger-1 { transition-delay: 0.1s; }
+.stagger-2 { transition-delay: 0.2s; }
+.stagger-3 { transition-delay: 0.3s; }
+.stagger-4 { transition-delay: 0.4s; }
+.stagger-5 { transition-delay: 0.5s; }
+.stagger-6 { transition-delay: 0.6s; }
+
+/* Progress bar */
+.progress-fill { transition: width 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+
+/* Grain overlay */
+.grain::before {
+  content: ''; position: fixed; top: -50%; left: -50%; right: -50%; bottom: -50%; width: 200%; height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; animation: grain 8s steps(10) infinite; opacity: 0.3;
+}
+
+/* Ticker tape */
+.ticker-wrap { overflow: hidden; white-space: nowrap; }
+.ticker-content { display: inline-flex; animation: marquee 40s linear infinite; }
+.ticker-content:hover { animation-play-state: paused; }
+
+/* Timeline */
+.timeline-line { position: absolute; left: 50%; width: 3px; background: #000; top: 0; bottom: 0; transform: translateX(-50%); }
+@media (max-width: 768px) { .timeline-line { left: 20px; } }
+
+/* Easter egg cursor */
+.easter-found { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E🚀%3C/text%3E%3C/svg%3E") 16 16, auto; }
+
+/* Tooltip */
+.tooltip { position: relative; }
+.tooltip::after { content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) scale(0.8); background: #000; color: #FFE600; padding: 6px 12px; border-radius: 0; font-size: 12px; font-weight: 600; white-space: nowrap; opacity: 0; pointer-events: none; transition: all 0.2s ease; border: 2px solid #000; }
+.tooltip:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+
+/* Number counter */
+.counter-value { display: inline-block; min-width: 2ch; text-align: right; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #FAFAF9; }
+::-webkit-scrollbar-thumb { background: #000; border: 2px solid #FAFAF9; }
+
+/* Selection */
+::selection { background: #FFE600; color: #000; }
+
+.workflow-step { transition: all 0.3s ease; }
+.workflow-step:hover { transform: translateY(-4px); }
+.workflow-step:hover .step-icon { transform: rotate(5deg) scale(1.1); }
+.step-icon { transition: all 0.3s ease; }
+</style>
+</head>
+<body class="grain">
+
+<!-- NAV -->
+<nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-sm neo-border-2 border-t-0 border-l-0 border-r-0" id="nav">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-brutal-yellow neo-border flex items-center justify-center font-black text-lg neo-shadow cursor-pointer hover:rotate-12 transition-transform" id="logo-egg" title="Click me...">Q</div>
+        <span class="font-extrabold text-lg tracking-tight hidden sm:block">QUEOVAL<span class="text-brutal-blue">×</span>n8n</span>
+      </div>
+      <div class="hidden md:flex items-center gap-1">
+        <a href="#api" class="px-3 py-1.5 text-sm font-semibold hover:bg-brutal-yellow transition-colors">API</a>
+        <a href="#automation" class="px-3 py-1.5 text-sm font-semibold hover:bg-brutal-yellow transition-colors">Automation</a>
+        <a href="#solutions" class="px-3 py-1.5 text-sm font-semibold hover:bg-brutal-yellow transition-colors">Solutions</a>
+        <a href="#demo" class="px-3 py-1.5 text-sm font-semibold hover:bg-brutal-yellow transition-colors">Cas réel</a>
+        <a href="#roadmap" class="px-3 py-1.5 text-sm font-semibold hover:bg-brutal-yellow transition-colors">Roadmap</a>
+        <a href="#pricing" class="neo-btn bg-brutal-yellow px-4 py-1.5 text-sm ml-2">2 800 €</a>
+      </div>
+      <button class="md:hidden neo-btn bg-white px-3 py-1.5 text-sm" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">Menu</button>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-white neo-border-2 border-l-0 border-r-0 border-t-0">
+    <div class="px-4 py-3 space-y-2">
+      <a href="#api" class="block py-2 font-semibold">API</a>
+      <a href="#automation" class="block py-2 font-semibold">Automation</a>
+      <a href="#solutions" class="block py-2 font-semibold">Solutions</a>
+      <a href="#demo" class="block py-2 font-semibold">Cas réel</a>
+      <a href="#roadmap" class="block py-2 font-semibold">Roadmap</a>
+      <a href="#pricing" class="block py-2 font-semibold">Pricing</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="min-h-screen flex items-center pt-16 relative overflow-hidden">
+  <div class="absolute inset-0 pointer-events-none">
+    <div class="absolute top-20 right-10 w-72 h-72 bg-brutal-yellow/20 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute bottom-20 left-10 w-96 h-96 bg-brutal-blue/10 rounded-full blur-3xl animate-float-delayed"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/5 rounded-full"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-black/5 rounded-full"></div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
+    <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2 bg-brutal-green/10 neo-border-2 px-4 py-2 mb-8 reveal">
+          <span class="w-2 h-2 bg-brutal-green rounded-full animate-pulse"></span>
+          <span class="font-mono text-sm font-semibold">API QUEOVAL — 80 ENDPOINTS DISPONIBLES</span>
+        </div>
+        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black leading-[0.95] tracking-tight mb-6 reveal stagger-1">
+          Automatise<br>
+          <span class="relative inline-block">
+            <span class="relative z-10">ton centre</span>
+            <span class="absolute bottom-1 left-0 w-full h-4 bg-brutal-yellow -z-0"></span>
+          </span><br>
+          de formation
+        </h1>
+        <p class="text-lg sm:text-xl text-gray-600 leading-relaxed mb-8 max-w-lg reveal stagger-2">
+          De l'appel prospect à l'inscription finale. <strong class="text-black">90-95% du workflow administratif</strong> tourne tout seul. Plus de double saisie. Plus de relances oubliées.
+        </p>
+        <div class="flex flex-wrap gap-4 reveal stagger-3">
+          <a href="#demo" class="neo-btn bg-brutal-yellow px-8 py-4 text-lg font-extrabold inline-flex items-center gap-2">
+            Voir le cas réel
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <a href="#pricing" class="neo-btn bg-white px-8 py-4 text-lg font-extrabold">8 jours — 2 800 €</a>
+        </div>
+        <div class="mt-10 flex items-center gap-6 reveal stagger-4">
+          <div class="flex -space-x-2">
+            <div class="w-8 h-8 bg-brutal-pink neo-border-2 rounded-full flex items-center justify-center text-xs font-bold">Q</div>
+            <div class="w-8 h-8 bg-brutal-blue neo-border-2 rounded-full flex items-center justify-center text-xs font-bold text-white">n8</div>
+            <div class="w-8 h-8 bg-brutal-green neo-border-2 rounded-full flex items-center justify-center text-xs font-bold">AT</div>
+          </div>
+          <p class="text-sm text-gray-500 font-medium">Queoval + n8n + Airtable + JotForm + Google Drive</p>
+        </div>
+      </div>
+
+      <div class="relative reveal stagger-3">
+        <div class="neo-card bg-white p-6 sm:p-8 relative z-10">
+          <div class="flex items-center gap-2 mb-6">
+            <div class="w-3 h-3 rounded-full bg-brutal-red"></div>
+            <div class="w-3 h-3 rounded-full bg-brutal-yellow"></div>
+            <div class="w-3 h-3 rounded-full bg-brutal-green"></div>
+            <span class="ml-2 font-mono text-xs text-gray-400">queoval-automation.flow</span>
+          </div>
+          <div class="space-y-3 font-mono text-sm">
+            <div class="flex items-start gap-3 p-3 bg-gray-50 neo-border-2 workflow-step">
+              <span class="step-icon text-xl">📞</span>
+              <div><span class="text-brutal-blue font-bold">INPUT</span> <span class="text-gray-500">Appel entrant</span><br><span class="text-xs text-gray-400">→ Saisie Airtable (2 min)</span></div>
+            </div>
+            <div class="flex justify-center text-gray-300 text-lg">│</div>
+            <div class="flex items-start gap-3 p-3 bg-brutal-yellow/10 neo-border-2 workflow-step">
+              <span class="step-icon text-xl">⚡</span>
+              <div><span class="text-brutal-orange font-bold">n8n</span> <span class="text-gray-500">Création auto</span><br><span class="text-xs text-gray-400">→ Client + Stage + Convention</span></div>
+            </div>
+            <div class="flex justify-center text-gray-300 text-lg">│</div>
+            <div class="flex items-start gap-3 p-3 bg-brutal-blue/10 neo-border-2 workflow-step">
+              <span class="step-icon text-xl">📄</span>
+              <div><span class="text-brutal-blue font-bold">PDF</span> <span class="text-gray-500">Convention générée</span><br><span class="text-xs text-gray-400">→ Upload Queoval + Email + Drive</span></div>
+            </div>
+            <div class="flex justify-center text-gray-300 text-lg">│</div>
+            <div class="flex items-start gap-3 p-3 bg-brutal-green/10 neo-border-2 workflow-step">
+              <span class="step-icon text-xl">✅</span>
+              <div><span class="text-brutal-green font-bold">VALIDÉ</span> <span class="text-gray-500">Prérequis OK</span><br><span class="text-xs text-gray-400">→ Inscription confirmée</span></div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t-2 border-dashed border-gray-200 flex items-center justify-between">
+            <span class="text-xs text-gray-400 font-mono">Temps humain : ~2 min</span>
+            <span class="text-xs font-bold bg-brutal-green text-white px-3 py-1 neo-border-2">-90% temps admin</span>
+          </div>
+        </div>
+        <div class="absolute -top-4 -right-4 w-24 h-24 bg-brutal-yellow neo-border flex items-center justify-center rotate-12 animate-float z-20 hidden lg:flex">
+          <span class="text-3xl font-black -rotate-12">80<br><span class="text-xs">endpoints</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="bg-black text-white py-3 neo-border-2 border-l-0 border-r-0 overflow-hidden">
+  <div class="ticker-wrap">
+    <div class="ticker-content">
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-yellow">■</span> ENTREPRISES</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-pink">■</span> CONTACTS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-blue">■</span> ACTIONS CO</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-green">■</span> CATALOGUE</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-orange">■</span> STAGES</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-purple">■</span> CONVENTIONS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-cyan">■</span> SESSIONS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-red">■</span> APPRENANTS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-yellow">■</span> DOCUMENTS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-pink">■</span> TÂCHES</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-blue">■</span> COMPTA</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-green">■</span> WORKFLOW</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-orange">■</span> ÉTABLISSEMENT</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-yellow">■</span> ENTREPRISES</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-pink">■</span> CONTACTS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-blue">■</span> ACTIONS CO</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-green">■</span> CATALOGUE</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-orange">■</span> STAGES</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-purple">■</span> CONVENTIONS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-cyan">■</span> SESSIONS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-red">■</span> APPRENANTS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-yellow">■</span> DOCUMENTS</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-pink">■</span> TÂCHES</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-blue">■</span> COMPTA</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-green">■</span> WORKFLOW</span>
+      <span class="mx-8 font-mono text-sm font-bold flex items-center gap-2"><span class="text-brutal-orange">■</span> ÉTABLISSEMENT</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 1: API SOUS LE CAPOT -->
+<section id="api" class="py-24 sm:py-32 bg-white relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mb-16">
+      <div class="inline-flex items-center gap-2 bg-brutal-blue/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+        <span>01</span><span class="text-brutal-blue">//</span><span>API QUEOVAL</span>
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+        Ce qu'on a<br>sous le capot
+      </h2>
+      <p class="text-lg text-gray-600 leading-relaxed reveal stagger-2">
+        L'API Queoval est sur <strong class="font-mono text-black">apimetier.com</strong>. Token via login/password, ~80 endpoints, et franchement plus de matière que prévu. Voici tout ce qu'on peut toucher.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Module cards -->
+      <div class="neo-card bg-brutal-yellow/5 p-6 reveal stagger-1">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-yellow neo-border-2 flex items-center justify-center text-xl font-black">E</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Entreprises</h3>
+            <span class="font-mono text-xs text-gray-500">CRUD complet</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Créer des clients, prospects et fournisseurs. Les modifier, les lister, les rechercher. Toute la base entreprise est accessible.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+          <span class="text-xs font-mono bg-brutal-blue/20 px-2 py-1 neo-border-2 border-gray-300">PUT</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-pink/5 p-6 reveal stagger-2">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-pink neo-border-2 flex items-center justify-center text-xl font-black text-white">C</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Contacts</h3>
+            <span class="font-mono text-xs text-gray-500">Personnes physiques</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Contacts, formateurs, collaborateurs. Toute la gestion des personnes liées aux entreprises et aux formations.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+          <span class="text-xs font-mono bg-brutal-blue/20 px-2 py-1 neo-border-2 border-gray-300">PUT</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-blue/5 p-6 reveal stagger-3">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-blue neo-border-2 flex items-center justify-center text-xl font-black text-white">A</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Actions Co</h3>
+            <span class="font-mono text-xs text-gray-500">Pipeline commercial</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Créer et lister des actions commerciales. L'onglet "Action" dans Queoval, directement pilotable par API.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-green/5 p-6 reveal stagger-4">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-green neo-border-2 flex items-center justify-center text-xl font-black text-white">K</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Catalogue</h3>
+            <span class="font-mono text-xs text-gray-500">Offre de formation</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Accéder aux formations, actions de formation, adresses. Créer de nouvelles entrées catalogue. La base de l'offre pédagogique.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-orange/5 p-6 reveal stagger-5 sm:col-span-2 lg:col-span-1">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-orange neo-border-2 flex items-center justify-center text-xl font-black text-white">S</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Stage</h3>
+            <span class="font-mono text-xs text-gray-500">Le gros morceau</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Créer un stage, affecter un client, affecter des apprenants, lister sessions, conventions, formateurs, documents, historique, tâches, bilans. Le module le plus riche de l'API.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+          <span class="text-xs font-mono bg-brutal-blue/20 px-2 py-1 neo-border-2 border-gray-300">PUT</span>
+          <span class="text-xs font-mono bg-brutal-red/20 px-2 py-1 neo-border-2 border-gray-300">DELETE</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-purple/5 p-6 reveal stagger-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-purple neo-border-2 flex items-center justify-center text-xl font-black text-white">V</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Convention</h3>
+            <span class="font-mono text-xs text-gray-500">Docs contractuels</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Récupérer les infos d'une convention : stagiaires, financeurs, factures, données RH. Tout le volet contractuel.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-cyan/5 p-6 reveal stagger-1">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-cyan neo-border-2 flex items-center justify-center text-xl font-black text-white">P</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Session</h3>
+            <span class="font-mono text-xs text-gray-500">Suivi pédagogique</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Apprenants d'une session, formateurs assignés, présences et absences. Le suivi opérationnel en temps réel.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-red/5 p-6 reveal stagger-2">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-red neo-border-2 flex items-center justify-center text-xl font-black text-white">D</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Document</h3>
+            <span class="font-mono text-xs text-gray-500">Upload & Download</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Récupérer les docs d'une personne ou entreprise. Uploader des fichiers. La pièce clé pour l'archivage automatique.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+        </div>
+      </div>
+
+      <div class="neo-card bg-gray-50 p-6 reveal stagger-3">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-black neo-border-2 flex items-center justify-center text-xl font-black text-white">+</div>
+          <div>
+            <h3 class="font-extrabold text-lg">Et aussi...</h3>
+            <span class="font-mono text-xs text-gray-500">Tâches, Compta, Workflow</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Tâches collaborateurs, factures, écritures comptables, exports. Et le module <strong>WORKFLOW (BETA)</strong> pour exécuter des chaînes d'événements.</p>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs font-mono bg-brutal-yellow/30 px-2 py-1 neo-border-2 border-gray-300">BETA</span>
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 neo-border-2 border-gray-300">GET</span>
+          <span class="text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 border-gray-300">POST</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: AUTOMATISATION DIRECTE (75%) -->
+<section id="automation" class="py-24 sm:py-32 bg-brutal-yellow/5 relative">
+  <div class="absolute top-0 left-0 w-full h-1 bg-black"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-16 items-start">
+      <div>
+        <div class="inline-flex items-center gap-2 bg-brutal-green/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+          <span>02</span><span class="text-brutal-green">//</span><span>AUTOMATISATION DIRECTE</span>
+        </div>
+        <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+          75% du workflow<br>
+          <span class="text-brutal-green">sans bidouiller</span>
+        </h2>
+        <p class="text-lg text-gray-600 leading-relaxed mb-8 reveal stagger-2">
+          Tout ce qui est saisie de données et suivi de dossier tourne avec <strong class="text-black">n8n + l'API Queoval</strong>. Pas de contournement, pas de hack. Ça marche directement.
+        </p>
+
+        <!-- Animated progress bar -->
+        <div class="neo-card bg-white p-6 mb-8 reveal stagger-3">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-bold text-sm">Taux d'automatisation directe</span>
+            <span class="font-mono font-bold text-2xl text-brutal-green counter" data-target="75">0%</span>
+          </div>
+          <div class="w-full h-6 bg-gray-100 neo-border-2 overflow-hidden">
+            <div class="h-full bg-brutal-green progress-fill" style="width: 0%" data-width="75%"></div>
+          </div>
+          <p class="text-xs text-gray-500 mt-2 font-mono">API native — aucun workaround</p>
+        </div>
+
+        <div class="neo-card bg-white p-5 reveal stagger-4">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-2xl">🔗</span>
+            <h4 class="font-bold">Stack technique</h4>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center gap-2 p-2 bg-gray-50 neo-border-2"><span class="font-mono text-xs font-bold">n8n</span><span class="text-xs text-gray-500">Orchestration</span></div>
+            <div class="flex items-center gap-2 p-2 bg-gray-50 neo-border-2"><span class="font-mono text-xs font-bold">Queoval</span><span class="text-xs text-gray-500">API Métier</span></div>
+            <div class="flex items-center gap-2 p-2 bg-gray-50 neo-border-2"><span class="font-mono text-xs font-bold">JotForm</span><span class="text-xs text-gray-500">Formulaires</span></div>
+            <div class="flex items-center gap-2 p-2 bg-gray-50 neo-border-2"><span class="font-mono text-xs font-bold">Drive</span><span class="text-xs text-gray-500">Archivage</span></div>
+            <div class="flex items-center gap-2 p-2 bg-gray-50 neo-border-2"><span class="font-mono text-xs font-bold">Airtable</span><span class="text-xs text-gray-500">Qualification</span></div>
+            <div class="flex items-center gap-2 p-2 bg-gray-50 neo-border-2"><span class="font-mono text-xs font-bold">SMTP</span><span class="text-xs text-gray-500">Emails</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <div class="neo-card bg-white p-6 reveal-right stagger-1 group cursor-pointer" data-tooltip>
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-brutal-blue/10 neo-border-2 flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-brutal-blue group-hover:text-white transition-colors">📞</div>
+            <div>
+              <h4 class="font-extrabold text-lg mb-1">Prospect / Client</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">JotForm ou appel entrant ? n8n crée le prospect ou le client directement dans Queoval. <strong>Fini la double saisie.</strong></p>
+              <div class="mt-3 inline-flex items-center gap-1 text-xs font-mono text-brutal-blue font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>JotForm</span><span>→</span><span>n8n</span><span>→</span><span>Queoval</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neo-card bg-white p-6 reveal-right stagger-2 group cursor-pointer">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-brutal-orange/10 neo-border-2 flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-brutal-orange group-hover:text-white transition-colors">🎯</div>
+            <div>
+              <h4 class="font-extrabold text-lg mb-1">Action commerciale</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">Création automatique de l'action co via l'API. Le pipeline se remplit tout seul.</p>
+              <div class="mt-3 inline-flex items-center gap-1 text-xs font-mono text-brutal-orange font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Trigger</span><span>→</span><span>n8n</span><span>→</span><span>Action Co</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neo-card bg-white p-6 reveal-right stagger-3 group cursor-pointer">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-brutal-green/10 neo-border-2 flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-brutal-green group-hover:text-white transition-colors">🎓</div>
+            <div>
+              <h4 class="font-extrabold text-lg mb-1">Stage & Apprenants</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">Créer le stage, affecter le client, inscrire les apprenants. Tout via les endpoints dédiés.</p>
+              <div class="mt-3 inline-flex items-center gap-1 text-xs font-mono text-brutal-green font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Stage</span><span>→</span><span>Client</span><span>→</span><span>Apprenants</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neo-card bg-white p-6 reveal-right stagger-4 group cursor-pointer">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-brutal-purple/10 neo-border-2 flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-brutal-purple group-hover:text-white transition-colors">🔍</div>
+            <div>
+              <h4 class="font-extrabold text-lg mb-1">Vérification documents</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">n8n récupère les docs via l'API, vérifie les règles (carte SST pas expirée, attestation présente) et agit en fonction.</p>
+              <div class="mt-3 inline-flex items-center gap-1 text-xs font-mono text-brutal-purple font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Docs</span><span>→</span><span>Règles</span><span>→</span><span>Action</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neo-card bg-white p-6 reveal-right stagger-5 group cursor-pointer">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-brutal-red/10 neo-border-2 flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-brutal-red group-hover:text-white transition-colors">📧</div>
+            <div>
+              <h4 class="font-extrabold text-lg mb-1">Relances & Tâches</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">Document manquant ? Email de relance auto au bon interlocuteur. Notification interne ? Tâche Queoval pour le bon collaborateur.</p>
+              <div class="mt-3 inline-flex items-center gap-1 text-xs font-mono text-brutal-red font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Alerte</span><span>→</span><span>Email/Tâche</span><span>→</span><span>Suivi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neo-card bg-white p-6 reveal-right stagger-6 group cursor-pointer">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-brutal-cyan/10 neo-border-2 flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-brutal-cyan group-hover:text-white transition-colors">📁</div>
+            <div>
+              <h4 class="font-extrabold text-lg mb-1">Archivage Google Drive</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">Chaque document poussé dans Drive avec la bonne arborescence : <span class="font-mono text-xs bg-gray-100 px-1">Année / Stage-Session / Apprenant</span></p>
+              <div class="mt-3 inline-flex items-center gap-1 text-xs font-mono text-brutal-cyan font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Doc</span><span>→</span><span>Drive</span><span>→</span><span>Organisé</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: SOLUTIONS CRÉATIVES (15-20%) -->
+<section id="solutions" class="py-24 sm:py-32 bg-white relative">
+  <div class="absolute top-0 left-0 w-full h-1 bg-black"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mb-16">
+      <div class="inline-flex items-center gap-2 bg-brutal-orange/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+        <span>03</span><span class="text-brutal-orange">//</span><span>SOLUTIONS CRÉATIVES</span>
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+        L'API ne le fait pas ?<br>
+        <span class="text-brutal-orange">On s'adapte.</span>
+      </h2>
+      <p class="text-lg text-gray-600 leading-relaxed reveal stagger-2">
+        Y'a des fonctions Queoval qui ne sont pas dans l'API. Mais pour chacune, on a une solution élégante qui donne le même résultat. Le client ne voit aucune différence.
+      </p>
+    </div>
+
+    <!-- Solution cards - detailed -->
+    <div class="space-y-8">
+      <!-- Devis -->
+      <div class="neo-card bg-gradient-to-r from-brutal-yellow/5 to-white p-8 sm:p-10 reveal">
+        <div class="grid lg:grid-cols-5 gap-8">
+          <div class="lg:col-span-2">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">📋</span>
+              <div>
+                <h3 class="text-2xl font-black">Générer un devis</h3>
+                <span class="inline-flex items-center gap-1 text-xs font-mono bg-brutal-yellow/20 px-2 py-1 neo-border-2 mt-1">
+                  <span class="w-1.5 h-1.5 bg-brutal-orange rounded-full"></span> CONTOURNEMENT
+                </span>
+              </div>
+            </div>
+            <p class="text-gray-600 leading-relaxed">
+              L'API ne crée pas de devis dans Queoval. Mais un devis c'est quoi ? Un PDF avec le nom du client, la formation, le prix et les CGV. Donc on le génère nous-mêmes.
+            </p>
+          </div>
+          <div class="lg:col-span-3">
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 p-3 bg-white neo-border-2 group hover:bg-brutal-yellow/10 transition-colors">
+                <span class="w-8 h-8 bg-brutal-blue/10 neo-border-2 flex items-center justify-center font-mono font-bold text-sm group-hover:bg-brutal-blue group-hover:text-white transition-colors">1</span>
+                <span class="text-sm">n8n récupère les infos formation via <strong>API Catalogue</strong> (prix, durée, programme)</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-white neo-border-2 group hover:bg-brutal-yellow/10 transition-colors">
+                <span class="w-8 h-8 bg-brutal-blue/10 neo-border-2 flex items-center justify-center font-mono font-bold text-sm group-hover:bg-brutal-blue group-hover:text-white transition-colors">2</span>
+                <span class="text-sm">n8n récupère les infos client via <strong>API Entreprises</strong></span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-white neo-border-2 group hover:bg-brutal-yellow/10 transition-colors">
+                <span class="w-8 h-8 bg-brutal-blue/10 neo-border-2 flex items-center justify-center font-mono font-bold text-sm group-hover:bg-brutal-blue group-hover:text-white transition-colors">3</span>
+                <span class="text-sm">Génération <strong>PDF</strong> depuis template HTML avec la charte du centre</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-white neo-border-2 group hover:bg-brutal-yellow/10 transition-colors">
+                <span class="w-8 h-8 bg-brutal-blue/10 neo-border-2 flex items-center justify-center font-mono font-bold text-sm group-hover:bg-brutal-blue group-hover:text-white transition-colors">4</span>
+                <span class="text-sm"><strong>Upload</strong> dans Queoval via API Document + <strong>email</strong> au prospect + <strong>archivage</strong> Drive</span>
+              </div>
+            </div>
+            <div class="mt-4 p-3 bg-brutal-green/10 neo-border-2">
+              <p class="text-xs font-mono text-brutal-green font-bold">RÉSULTAT : L'équipe retrouve le devis dans Queoval au bon endroit. Le client reçoit son PDF. Personne n'a rien fait à la main.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emails -->
+      <div class="neo-card bg-gradient-to-r from-brutal-blue/5 to-white p-8 sm:p-10 reveal stagger-1">
+        <div class="grid lg:grid-cols-5 gap-8">
+          <div class="lg:col-span-2">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">✉️</span>
+              <div>
+                <h3 class="text-2xl font-black">Envoi d'emails</h3>
+                <span class="inline-flex items-center gap-1 text-xs font-mono bg-brutal-blue/20 px-2 py-1 neo-border-2 mt-1">
+                  <span class="w-1.5 h-1.5 bg-brutal-blue rounded-full"></span> MÊME MIEUX
+                </span>
+              </div>
+            </div>
+            <p class="text-gray-600 leading-relaxed">
+              Pas d'email via l'API Queoval. Pas grave. Les emails partent via SMTP avec l'adresse du centre. Le destinataire voit exactement la même chose.
+            </p>
+          </div>
+          <div class="lg:col-span-3">
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div class="p-4 bg-white neo-border-2 hover:bg-brutal-blue/5 transition-colors">
+                <span class="text-lg mb-1 block">🎨</span>
+                <h5 class="font-bold text-sm mb-1">Emails HTML</h5>
+                <p class="text-xs text-gray-500">Templates mis en forme avec la charte graphique, bien plus beaux que les emails Queoval</p>
+              </div>
+              <div class="p-4 bg-white neo-border-2 hover:bg-brutal-blue/5 transition-colors">
+                <span class="text-lg mb-1 block">📎</span>
+                <h5 class="font-bold text-sm mb-1">Pièces jointes auto</h5>
+                <p class="text-xs text-gray-500">Convention, devis, formulaires — attachés automatiquement au bon email</p>
+              </div>
+              <div class="p-4 bg-white neo-border-2 hover:bg-brutal-blue/5 transition-colors">
+                <span class="text-lg mb-1 block">🔄</span>
+                <h5 class="font-bold text-sm mb-1">Personnalisation</h5>
+                <p class="text-xs text-gray-500">Chaque message adapté : relance, confirmation, notification interne</p>
+              </div>
+              <div class="p-4 bg-white neo-border-2 hover:bg-brutal-blue/5 transition-colors">
+                <span class="text-lg mb-1 block">📝</span>
+                <h5 class="font-bold text-sm mb-1">Traçabilité</h5>
+                <p class="text-xs text-gray-500">Tâche Queoval à chaque envoi : "Email envoyé à X le Y — Objet : Z"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Convention -->
+      <div class="neo-card bg-gradient-to-r from-brutal-green/5 to-white p-8 sm:p-10 reveal stagger-2">
+        <div class="grid lg:grid-cols-5 gap-8">
+          <div class="lg:col-span-2">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">🔄</span>
+              <div>
+                <h3 class="text-2xl font-black">Devis → Convention</h3>
+                <span class="inline-flex items-center gap-1 text-xs font-mono bg-brutal-green/20 px-2 py-1 neo-border-2 mt-1">
+                  <span class="w-1.5 h-1.5 bg-brutal-green rounded-full"></span> SIMPLIFIÉ
+                </span>
+              </div>
+            </div>
+            <p class="text-gray-600 leading-relaxed">
+              La "transformation" devis → convention de Queoval n'est pas dans l'API. On n'en a pas besoin : on crée directement le stage et la convention.
+            </p>
+          </div>
+          <div class="lg:col-span-3">
+            <div class="flex flex-wrap items-center gap-2 p-4 bg-white neo-border-2">
+              <span class="px-3 py-2 bg-brutal-green/10 neo-border-2 text-sm font-bold">Prospect dit OUI</span>
+              <span class="text-gray-400 font-bold">→</span>
+              <span class="px-3 py-2 bg-brutal-blue/10 neo-border-2 text-sm font-bold">n8n détecte</span>
+              <span class="text-gray-400 font-bold">→</span>
+              <span class="px-3 py-2 bg-brutal-orange/10 neo-border-2 text-sm font-bold">Crée stage</span>
+              <span class="text-gray-400 font-bold">→</span>
+              <span class="px-3 py-2 bg-brutal-purple/10 neo-border-2 text-sm font-bold">Génère PDF</span>
+              <span class="text-gray-400 font-bold">→</span>
+              <span class="px-3 py-2 bg-brutal-yellow neo-border-2 text-sm font-bold">Upload + Email + Drive</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-3 font-mono">On passe pas par la case "transformation" de Queoval mais le résultat est strictement le même.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analyse des besoins + Effectif -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="neo-card bg-gradient-to-b from-brutal-purple/5 to-white p-6 sm:p-8 reveal stagger-3">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🔬</span>
+            <div>
+              <h3 class="text-xl font-black">Analyse des besoins</h3>
+              <span class="inline-flex items-center gap-1 text-xs font-mono bg-brutal-purple/20 px-2 py-1 neo-border-2 mt-1">AIRTABLE</span>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed mb-4">
+            L'onglet Queoval n'est pas dans l'API. On utilise Airtable : filtres par formation, par statut, vues personnalisées. C'est un <strong>plus</strong>, pas un compromis.
+          </p>
+          <div class="p-3 bg-brutal-purple/5 neo-border-2 text-xs font-mono">
+            Airtable → n8n → Action Co Queoval + Devis auto
+          </div>
+        </div>
+
+        <div class="neo-card bg-gradient-to-b from-brutal-cyan/5 to-white p-6 sm:p-8 reveal stagger-4">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">👥</span>
+            <div>
+              <h3 class="text-xl font-black">Inscription effectif</h3>
+              <span class="inline-flex items-center gap-1 text-xs font-mono bg-brutal-cyan/20 px-2 py-1 neo-border-2 mt-1">À TESTER</span>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed mb-4">Pas d'endpoint explicite. Trois pistes :</p>
+          <div class="space-y-2">
+            <div class="flex items-start gap-2 text-sm"><span class="text-brutal-green font-bold">1.</span><span>Module WORKFLOW (BETA) — événement d'inscription ?</span></div>
+            <div class="flex items-start gap-2 text-sm"><span class="text-brutal-blue font-bold">2.</span><span>Affectation apprenant → effectif auto ?</span></div>
+            <div class="flex items-start gap-2 text-sm"><span class="text-brutal-orange font-bold">3.</span><span>Fallback : tâche Queoval = 1 clic</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CNAPS - seule limitation -->
+      <div class="neo-card bg-black text-white p-8 sm:p-10 reveal stagger-5">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-2 mb-4 text-brutal-yellow font-mono text-sm font-bold neo-border-2 border-white/20">
+              ✋ SEULE LIMITATION
+            </div>
+            <h3 class="text-2xl font-black mb-3">Vérification CNAPS</h3>
+            <p class="text-gray-300 leading-relaxed">
+              Le site CNAPS n'a pas d'API. Vérification manuelle obligatoire. Mais ça concerne <strong class="text-white">uniquement les formations sécurité privée</strong>. Pour tout le reste, c'est automatique de A à Z.
+            </p>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-white/5 neo-border-2 border-white/10">
+              <span class="text-brutal-green font-bold">✓</span>
+              <span class="text-sm">n8n détecte "SIAP = vérif CNAPS obligatoire"</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-white/5 neo-border-2 border-white/10">
+              <span class="text-brutal-green font-bold">✓</span>
+              <span class="text-sm">Tâche Queoval + notification à l'équipe</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-brutal-yellow/10 neo-border-2 border-brutal-yellow/30">
+              <span class="text-brutal-yellow font-bold">✋</span>
+              <span class="text-sm font-bold text-brutal-yellow">Agent vérifie sur le site CNAPS</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-white/5 neo-border-2 border-white/10">
+              <span class="text-brutal-green font-bold">✓</span>
+              <span class="text-sm">MAJ Airtable → n8n reprend le relais</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: CAS RÉEL — SÉCURITÉ PLUS -->
+<section id="demo" class="py-24 sm:py-32 bg-brutal-blue/5 relative">
+  <div class="absolute top-0 left-0 w-full h-1 bg-black"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 bg-brutal-pink/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+        <span>04</span><span class="text-brutal-pink">//</span><span>CAS RÉEL DE BOUT EN BOUT</span>
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+        Sécurité Plus SARL<br>
+        <span class="text-brutal-pink">3 agents, 1 recyclage SIAP</span>
+      </h2>
+      <p class="text-lg text-gray-600 leading-relaxed reveal stagger-2">
+        Un cas typique, déroulé étape par étape. Avant : 1h à 2h de boulot admin sur plusieurs jours.<br><strong class="text-black">Après : 2 minutes de saisie + quelques minutes de vérif CNAPS.</strong>
+      </p>
+    </div>
+
+    <!-- Timeline -->
+    <div class="relative max-w-4xl mx-auto">
+      <!-- Vertical line -->
+      <div class="timeline-line hidden md:block"></div>
+
+      <!-- Step 1 -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal">
+        <div class="md:w-1/2 md:text-right md:pr-12">
+          <div class="neo-card bg-white p-6 inline-block text-left">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-blue neo-border-2 flex items-center justify-center text-white font-black text-sm">1</span>
+              <h4 class="font-extrabold">L'appel</h4>
+              <span class="text-xs font-mono bg-brutal-yellow/30 px-2 py-0.5 neo-border-2">2 MIN</span>
+            </div>
+            <p class="text-sm text-gray-600">L'agent reçoit l'appel de Sécurité Plus. Ouvre Airtable, saisit : entreprise, 3 salariés, formation "Recyclage SIAP". Valide.</p>
+            <div class="mt-3 text-xs font-mono text-brutal-blue">✋ Action humaine</div>
+          </div>
+        </div>
+        <div class="w-10 h-10 bg-brutal-blue neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full">📞</div>
+        <div class="md:w-1/2 md:pl-12 hidden md:block"></div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal stagger-1">
+        <div class="md:w-1/2 md:text-right md:pr-12 hidden md:block"></div>
+        <div class="w-10 h-10 bg-brutal-orange neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full">⚡</div>
+        <div class="md:w-1/2 md:pl-12">
+          <div class="neo-card bg-white p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-orange neo-border-2 flex items-center justify-center text-white font-black text-sm">2</span>
+              <h4 class="font-extrabold">Vérification client</h4>
+              <span class="text-xs font-mono bg-brutal-green/30 px-2 py-0.5 neo-border-2">AUTO</span>
+            </div>
+            <p class="text-sm text-gray-600">n8n vérifie dans Queoval : Sécurité Plus existe déjà ? Oui, déjà client. On récupère toutes les infos. Pas de re-saisie.</p>
+            <div class="mt-3 text-xs font-mono text-brutal-green">⚡ Automatique</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal stagger-2">
+        <div class="md:w-1/2 md:text-right md:pr-12">
+          <div class="neo-card bg-white p-6 inline-block text-left">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-green neo-border-2 flex items-center justify-center text-white font-black text-sm">3</span>
+              <h4 class="font-extrabold">Création dans Queoval</h4>
+              <span class="text-xs font-mono bg-brutal-green/30 px-2 py-0.5 neo-border-2">AUTO</span>
+            </div>
+            <p class="text-sm text-gray-600">n8n crée l'action co, le stage "Recyclage SIAP", affecte les 3 salariés + l'entreprise. Tout via l'API.</p>
+            <div class="mt-3 text-xs font-mono text-brutal-green">⚡ Automatique</div>
+          </div>
+        </div>
+        <div class="w-10 h-10 bg-brutal-green neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full">🎯</div>
+        <div class="md:w-1/2 md:pl-12 hidden md:block"></div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal stagger-3">
+        <div class="md:w-1/2 md:text-right md:pr-12 hidden md:block"></div>
+        <div class="w-10 h-10 bg-brutal-purple neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full">📄</div>
+        <div class="md:w-1/2 md:pl-12">
+          <div class="neo-card bg-white p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-purple neo-border-2 flex items-center justify-center text-white font-black text-sm">4</span>
+              <h4 class="font-extrabold">Convention PDF</h4>
+              <span class="text-xs font-mono bg-brutal-green/30 px-2 py-0.5 neo-border-2">AUTO</span>
+            </div>
+            <p class="text-sm text-gray-600">PDF généré avec les 3 noms, dates, tarifs. Upload dans Queoval. Archivé sur Drive dans <span class="font-mono text-xs">2026/Recyclage SIAP - Mars/Sécurité Plus</span>.</p>
+            <div class="mt-3 text-xs font-mono text-brutal-green">⚡ Automatique</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal stagger-4">
+        <div class="md:w-1/2 md:text-right md:pr-12">
+          <div class="neo-card bg-white p-6 inline-block text-left">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-pink neo-border-2 flex items-center justify-center text-white font-black text-sm">5</span>
+              <h4 class="font-extrabold">Email + JotForm</h4>
+              <span class="text-xs font-mono bg-brutal-green/30 px-2 py-0.5 neo-border-2">AUTO</span>
+            </div>
+            <p class="text-sm text-gray-600">Email envoyé à l'entreprise avec convention + lien JotForm par salarié. "Merci de faire remplir avec carte SST et attestation."</p>
+            <div class="mt-3 text-xs font-mono text-brutal-green">⚡ Automatique</div>
+          </div>
+        </div>
+        <div class="w-10 h-10 bg-brutal-pink neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full">✉️</div>
+        <div class="md:w-1/2 md:pl-12 hidden md:block"></div>
+      </div>
+
+      <!-- Step 6 - Verification -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal stagger-5">
+        <div class="md:w-1/2 md:text-right md:pr-12 hidden md:block"></div>
+        <div class="w-10 h-10 bg-brutal-cyan neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full">🔍</div>
+        <div class="md:w-1/2 md:pl-12">
+          <div class="neo-card bg-white p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-cyan neo-border-2 flex items-center justify-center text-white font-black text-sm">6</span>
+              <h4 class="font-extrabold">Vérification prérequis</h4>
+              <span class="text-xs font-mono bg-brutal-green/30 px-2 py-0.5 neo-border-2">AUTO</span>
+            </div>
+            <div class="space-y-2 mt-3">
+              <div class="flex items-start gap-2 p-2 bg-brutal-green/5 neo-border-2 text-sm">
+                <span class="text-brutal-green font-bold">✓</span>
+                <span><strong>Salarié 1</strong> — Tout OK. Carte SST valide, attestation, certificat médical.</span>
+              </div>
+              <div class="flex items-start gap-2 p-2 bg-brutal-orange/5 neo-border-2 text-sm">
+                <span class="text-brutal-orange font-bold">!</span>
+                <span><strong>Salarié 2</strong> — Attestation employeur manquante. Email relance → entreprise.</span>
+              </div>
+              <div class="flex items-start gap-2 p-2 bg-brutal-red/5 neo-border-2 text-sm">
+                <span class="text-brutal-red font-bold">✗</span>
+                <span><strong>Salarié 3</strong> — Carte SST expirée (15/11/2025). Email relance → entreprise.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 mb-12 reveal stagger-6">
+        <div class="md:w-1/2 md:text-right md:pr-12">
+          <div class="neo-card bg-brutal-yellow/10 p-6 inline-block text-left">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-yellow neo-border-2 flex items-center justify-center font-black text-sm">7</span>
+              <h4 class="font-extrabold">Vérif CNAPS</h4>
+              <span class="text-xs font-mono bg-brutal-yellow/30 px-2 py-0.5 neo-border-2">SEMI-AUTO</span>
+            </div>
+            <p class="text-sm text-gray-600">En parallèle : tâche CNAPS créée pour l'équipe. L'agent vérifie sur le site, met à jour Airtable. n8n reprend le relais.</p>
+            <div class="mt-3 text-xs font-mono text-brutal-orange">✋ + ⚡ Semi-automatique</div>
+          </div>
+        </div>
+        <div class="w-10 h-10 bg-brutal-yellow neo-border flex items-center justify-center font-black z-10 flex-shrink-0 rounded-full">🛡️</div>
+        <div class="md:w-1/2 md:pl-12 hidden md:block"></div>
+      </div>
+
+      <!-- Step 8 - Final -->
+      <div class="relative flex flex-col md:flex-row items-center gap-6 reveal">
+        <div class="md:w-1/2 md:text-right md:pr-12 hidden md:block"></div>
+        <div class="w-10 h-10 bg-brutal-green neo-border flex items-center justify-center text-white font-black z-10 flex-shrink-0 rounded-full text-lg">✅</div>
+        <div class="md:w-1/2 md:pl-12">
+          <div class="neo-card bg-brutal-green/10 p-6 border-brutal-green">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-8 h-8 bg-brutal-green neo-border-2 flex items-center justify-center text-white font-black text-sm">8</span>
+              <h4 class="font-extrabold">Confirmation</h4>
+              <span class="text-xs font-mono bg-brutal-green/30 px-2 py-0.5 neo-border-2">AUTO</span>
+            </div>
+            <p class="text-sm text-gray-600">3 jours plus tard, docs complets + CNAPS OK. n8n envoie la confirmation : "Vos 3 collaborateurs sont inscrits pour la session du 15 mars."</p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <span class="text-xs font-bold bg-white px-3 py-1.5 neo-border-2">✋ Temps humain : ~5 min</span>
+              <span class="text-xs font-bold bg-brutal-green text-white px-3 py-1.5 neo-border-2">⚡ Avant : 1h-2h</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: COUVERTURE -->
+<section class="py-24 sm:py-32 bg-white relative">
+  <div class="absolute top-0 left-0 w-full h-1 bg-black"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 bg-brutal-green/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+        <span>05</span><span class="text-brutal-green">//</span><span>TAUX DE COUVERTURE</span>
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+        90-95% automatisé.<br>
+        <span class="text-brutal-green">Le reste, c'est un clic.</span>
+      </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+      <!-- Direct -->
+      <div class="neo-card bg-brutal-green/10 p-8 text-center reveal stagger-1">
+        <div class="text-6xl sm:text-7xl font-black mb-2 text-brutal-green counter-num" data-target="75">0</div>
+        <div class="text-2xl font-black mb-2">%</div>
+        <div class="w-full h-4 bg-white neo-border-2 overflow-hidden mb-4">
+          <div class="h-full bg-brutal-green progress-fill" style="width: 0%" data-width="75%"></div>
+        </div>
+        <h4 class="font-extrabold mb-1">Automatisation directe</h4>
+        <p class="text-sm text-gray-500">API native, aucun contournement</p>
+        <div class="mt-4 inline-block text-xs font-mono bg-white px-2 py-1 neo-border-2">✅ DIRECT</div>
+      </div>
+
+      <!-- Contournement -->
+      <div class="neo-card bg-brutal-orange/10 p-8 text-center reveal stagger-2">
+        <div class="text-6xl sm:text-7xl font-black mb-2 text-brutal-orange">~20</div>
+        <div class="text-2xl font-black mb-2">%</div>
+        <div class="w-full h-4 bg-white neo-border-2 overflow-hidden mb-4">
+          <div class="h-full bg-brutal-orange progress-fill" style="width: 0%" data-width="20%"></div>
+        </div>
+        <h4 class="font-extrabold mb-1">Avec contournement</h4>
+        <p class="text-sm text-gray-500">Devis, emails, conventions, analyse</p>
+        <div class="mt-4 inline-block text-xs font-mono bg-white px-2 py-1 neo-border-2">🔧 ADAPTÉ</div>
+      </div>
+
+      <!-- Manuel -->
+      <div class="neo-card bg-gray-100 p-8 text-center reveal stagger-3">
+        <div class="text-6xl sm:text-7xl font-black mb-2 text-gray-400">~5</div>
+        <div class="text-2xl font-black mb-2">%</div>
+        <div class="w-full h-4 bg-white neo-border-2 overflow-hidden mb-4">
+          <div class="h-full bg-gray-400 progress-fill" style="width: 0%" data-width="5%"></div>
+        </div>
+        <h4 class="font-extrabold mb-1">Manuel</h4>
+        <p class="text-sm text-gray-500">CNAPS uniquement</p>
+        <div class="mt-4 inline-block text-xs font-mono bg-white px-2 py-1 neo-border-2">✋ CNAPS</div>
+      </div>
+    </div>
+
+    <!-- Total bar -->
+    <div class="max-w-4xl mx-auto mt-12 reveal stagger-4">
+      <div class="neo-card bg-black text-white p-6 sm:p-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h4 class="font-black text-2xl">TOTAL : 90-95% AUTOMATISÉ</h4>
+            <p class="text-gray-400 text-sm mt-1">De l'appel entrant à l'inscription confirmée</p>
+          </div>
+          <div class="text-5xl sm:text-6xl font-black text-brutal-yellow counter-num" data-target="95">0<span class="text-3xl">%</span></div>
+        </div>
+        <div class="w-full h-6 bg-white/10 neo-border-2 border-white/20 overflow-hidden mt-4">
+          <div class="h-full bg-gradient-to-r from-brutal-green via-brutal-yellow to-brutal-orange progress-fill" style="width: 0%" data-width="95%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: ROADMAP 8 JOURS -->
+<section id="roadmap" class="py-24 sm:py-32 bg-brutal-yellow/5 relative">
+  <div class="absolute top-0 left-0 w-full h-1 bg-black"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mb-16">
+      <div class="inline-flex items-center gap-2 bg-brutal-purple/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+        <span>06</span><span class="text-brutal-purple">//</span><span>ROADMAP</span>
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+        8 jours.<br>
+        <span class="text-brutal-purple">Du setup au go-live.</span>
+      </h2>
+      <p class="text-lg text-gray-600 leading-relaxed reveal stagger-2">
+        Un plan de 8 jours structuré, chaque étape construisant sur la précédente. Pas de surprise, pas de dépassement.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="neo-card bg-white p-6 reveal stagger-1 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-blue neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J1</div>
+          <div class="font-extrabold">Setup</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Config n8n, connexion API Queoval (token), branchement Airtable, Gmail/SMTP, Google Drive, webhooks JotForm.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Test appels API</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Test WORKFLOW BETA</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-blue"></div>
+      </div>
+
+      <div class="neo-card bg-white p-6 reveal stagger-2 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-orange neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J2</div>
+          <div class="font-extrabold">Parcours Entreprise</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Création client/prospect, action co, stage, affectation client + apprenants. Le coeur du système.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> CRUD Queoval complet</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Flux n8n principal</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-orange"></div>
+      </div>
+
+      <div class="neo-card bg-white p-6 reveal stagger-3 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-purple neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J3</div>
+          <div class="font-extrabold">PDF & Archivage</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Génération devis + convention depuis templates HTML. Upload Queoval + archivage Google Drive organisé.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Templates charte centre</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Arborescence Drive</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-purple"></div>
+      </div>
+
+      <div class="neo-card bg-white p-6 reveal stagger-4 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-pink neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J4</div>
+          <div class="font-extrabold">Emails</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Envoi devis, convention + lien JotForm, confirmations, notifications internes. Traçabilité tâches Queoval.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Templates HTML email</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Config SMTP</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-pink"></div>
+      </div>
+
+      <div class="neo-card bg-white p-6 reveal stagger-1 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-green neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J5</div>
+          <div class="font-extrabold">Prérequis</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Matrice de règles par formation. Vérification auto des documents : docs manquants, dates expirées, infos invalides.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Moteur de vérification</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Matrice par formation</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-green"></div>
+      </div>
+
+      <div class="neo-card bg-white p-6 reveal stagger-2 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-red neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J6</div>
+          <div class="font-extrabold">Relances & CNAPS</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Relances auto ciblées (apprenant ou employeur). Workflow CNAPS : détection, notification, reprise après validation.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Logique de ciblage</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Boucle CNAPS</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-red"></div>
+      </div>
+
+      <div class="neo-card bg-white p-6 reveal stagger-3 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-brutal-cyan neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J7</div>
+          <div class="font-extrabold">Particuliers & Airtable</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Adaptation pour prospects individuels. Structure Airtable : tables, vues par formation/statut, suivi relances.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Flux particulier</div>
+          <div class="text-xs font-mono text-gray-400 flex items-center gap-1"><span class="text-brutal-green">+</span> Airtable config</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-brutal-cyan"></div>
+      </div>
+
+      <div class="neo-card bg-brutal-yellow p-6 reveal stagger-4 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-black neo-border-2 flex items-center justify-center text-white font-black text-lg group-hover:rotate-6 transition-transform">J8</div>
+          <div class="font-extrabold">Tests & Go Live</div>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">Tests bout en bout sur les deux parcours. Debug, cas limites, documentation technique pour l'équipe.</p>
+        <div class="space-y-1">
+          <div class="text-xs font-mono text-gray-800 flex items-center gap-1"><span class="font-bold">→</span> E2E entreprise</div>
+          <div class="text-xs font-mono text-gray-800 flex items-center gap-1"><span class="font-bold">→</span> E2E particulier</div>
+        </div>
+        <div class="mt-4 w-full h-1 bg-black"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: NEXT STEPS -->
+<section class="py-24 sm:py-32 bg-white relative">
+  <div class="absolute top-0 left-0 w-full h-1 bg-black"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto mb-16 text-center">
+      <div class="inline-flex items-center gap-2 bg-brutal-cyan/10 neo-border-2 px-4 py-2 mb-6 reveal font-mono text-sm font-bold">
+        <span>07</span><span class="text-brutal-cyan">//</span><span>PROCHAINES ÉTAPES</span>
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-6 reveal stagger-1">
+        4 actions<br>pour démarrer
+      </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div class="neo-card bg-brutal-blue/5 p-8 reveal stagger-1 group">
+        <div class="flex items-start gap-4">
+          <div class="w-14 h-14 bg-brutal-blue neo-border-2 flex items-center justify-center text-white font-black text-xl flex-shrink-0 group-hover:rotate-12 transition-transform">1</div>
+          <div>
+            <h4 class="font-extrabold text-lg mb-2">Accès API Queoval</h4>
+            <p class="text-sm text-gray-600 leading-relaxed">Demander les identifiants API (utilisateur + mot de passe) au service technique Queoval. Ça se fait normalement assez vite.</p>
+            <span class="inline-block mt-3 text-xs font-mono bg-brutal-blue/10 px-2 py-1 neo-border-2">PRIORITÉ 1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-purple/5 p-8 reveal stagger-2 group">
+        <div class="flex items-start gap-4">
+          <div class="w-14 h-14 bg-brutal-purple neo-border-2 flex items-center justify-center text-white font-black text-xl flex-shrink-0 group-hover:rotate-12 transition-transform">2</div>
+          <div>
+            <h4 class="font-extrabold text-lg mb-2">Tester le WORKFLOW (BETA)</h4>
+            <p class="text-sm text-gray-600 leading-relaxed">Explorer ce que le module Workflow peut faire. C'est le truc qui peut nous faire passer de 90% à 95% d'automatisation.</p>
+            <span class="inline-block mt-3 text-xs font-mono bg-brutal-purple/10 px-2 py-1 neo-border-2">GAME CHANGER</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-green/5 p-8 reveal stagger-3 group">
+        <div class="flex items-start gap-4">
+          <div class="w-14 h-14 bg-brutal-green neo-border-2 flex items-center justify-center text-white font-black text-xl flex-shrink-0 group-hover:rotate-12 transition-transform">3</div>
+          <div>
+            <h4 class="font-extrabold text-lg mb-2">Matrice des prérequis</h4>
+            <p class="text-sm text-gray-600 leading-relaxed">Pour chaque formation : quels documents sont obligatoires et quelles dates vérifier. La base du moteur de vérification.</p>
+            <span class="inline-block mt-3 text-xs font-mono bg-brutal-green/10 px-2 py-1 neo-border-2">JOUR 5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="neo-card bg-brutal-orange/5 p-8 reveal stagger-4 group">
+        <div class="flex items-start gap-4">
+          <div class="w-14 h-14 bg-brutal-orange neo-border-2 flex items-center justify-center text-white font-black text-xl flex-shrink-0 group-hover:rotate-12 transition-transform">4</div>
+          <div>
+            <h4 class="font-extrabold text-lg mb-2">Premier flux n8n</h4>
+            <p class="text-sm text-gray-600 leading-relaxed">Monter le parcours entreprise en premier. C'est le plus fréquent et celui où on gagne le plus de temps immédiatement.</p>
+            <span class="inline-block mt-3 text-xs font-mono bg-brutal-orange/10 px-2 py-1 neo-border-2">QUICK WIN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 8: PRICING -->
+<section id="pricing" class="py-24 sm:py-32 bg-black text-white relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center gap-2 bg-white/10 neo-border-2 border-white/20 px-4 py-2 mb-6 reveal font-mono text-sm font-bold text-brutal-yellow">
+          <span>08</span><span class="text-white/50">//</span><span>INVESTISSEMENT</span>
+        </div>
+        <h2 class="text-4xl sm:text-6xl font-black leading-tight mb-6 reveal stagger-1">
+          <span class="text-brutal-yellow">2 800 €</span><br>
+          <span class="text-2xl sm:text-3xl text-gray-400">8 jours &times; 350 €/jour</span>
+        </h2>
+        <p class="text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto reveal stagger-2">
+          Du setup complet au go-live. Deux parcours automatisés (entreprise + particulier), moteur de vérification, relances, archivage. Tout inclus.
+        </p>
+      </div>
+
+      <div class="neo-card bg-white/5 border-white/20 p-8 sm:p-10 reveal stagger-3">
+        <div class="grid sm:grid-cols-2 gap-8">
+          <div>
+            <h4 class="font-extrabold text-xl mb-6 text-brutal-yellow">Ce qui est inclus</h4>
+            <div class="space-y-3">
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Setup complet n8n + toutes les intégrations</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Flux parcours entreprise (CRUD Queoval complet)</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Flux parcours particulier</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Génération PDF devis + conventions</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Système d'emails automatiques</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Moteur de vérification prérequis</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Relances automatiques ciblées</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Archivage Google Drive structuré</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Structure Airtable (tables + vues)</span></div>
+              <div class="flex items-start gap-3"><span class="text-brutal-green mt-0.5">&#10003;</span><span class="text-sm text-gray-300">Tests E2E + documentation technique</span></div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-extrabold text-xl mb-6 text-brutal-yellow">Le ROI</h4>
+            <div class="space-y-4">
+              <div class="p-4 bg-white/5 neo-border-2 border-white/10">
+                <div class="text-3xl font-black text-brutal-green mb-1">-90%</div>
+                <p class="text-sm text-gray-400">de temps administratif par dossier</p>
+              </div>
+              <div class="p-4 bg-white/5 neo-border-2 border-white/10">
+                <div class="text-3xl font-black text-brutal-yellow mb-1">2 min</div>
+                <p class="text-sm text-gray-400">au lieu de 1-2h par inscription</p>
+              </div>
+              <div class="p-4 bg-white/5 neo-border-2 border-white/10">
+                <div class="text-3xl font-black text-brutal-cyan mb-1">0</div>
+                <p class="text-sm text-gray-400">relance oubliée, document perdu</p>
+              </div>
+              <div class="p-4 bg-white/5 neo-border-2 border-white/10">
+                <div class="text-3xl font-black text-brutal-pink mb-1">24/7</div>
+                <p class="text-sm text-gray-400">vérification et relances automatiques</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-10 pt-8 border-t-2 border-dashed border-white/10 text-center">
+          <p class="text-gray-400 mb-6">Le projet tient la route. L'API est là, les contournements marchent, rien de bloquant.</p>
+          <a href="mailto:contact@example.com" class="neo-btn bg-brutal-yellow text-black px-10 py-5 text-xl font-black inline-flex items-center gap-3 hover:bg-brutal-green transition-colors">
+            On démarre ?
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-black text-white py-8 border-t-3 border-white/20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-brutal-yellow neo-border-2 flex items-center justify-center font-black text-sm text-black">Q</div>
+        <span class="font-bold text-sm">QUEOVAL <span class="text-brutal-blue">&times;</span> n8n — Proposition technique</span>
+      </div>
+      <p class="text-xs text-gray-500 font-mono" id="footer-secret">Fait avec du caf&eacute; et de l'API &bull; 2026</p>
+    </div>
+  </div>
+</footer>
+
+<!-- SCRIPTS -->
+<script>
+// Intersection Observer for scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Animate progress bars
+      if (entry.target.querySelector('.progress-fill')) {
+        entry.target.querySelectorAll('.progress-fill').forEach(bar => {
+          setTimeout(() => { bar.style.width = bar.dataset.width; }, 300);
+        });
+      }
+      // Animate counters
+      if (entry.target.querySelector('.counter-num')) {
+        entry.target.querySelectorAll('.counter-num').forEach(el => {
+          animateCounter(el, parseInt(el.dataset.target));
+        });
+      }
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => observer.observe(el));
+
+// Counter animation
+function animateCounter(el, target) {
+  if (el.dataset.animated) return;
+  el.dataset.animated = 'true';
+  let current = 0;
+  const duration = 2000;
+  const step = target / (duration / 16);
+  const suffix = el.innerHTML.includes('%') ? '<span class="text-3xl">%</span>' : '';
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) { current = target; clearInterval(timer); }
+    el.innerHTML = Math.round(current) + suffix;
+  }, 16);
+}
+
+// Counter for percentage displays
+document.querySelectorAll('.counter').forEach(el => {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !el.dataset.animated) {
+        el.dataset.animated = 'true';
+        const target = parseInt(el.dataset.target);
+        let current = 0;
+        const timer = setInterval(() => {
+          current += 1;
+          if (current >= target) { current = target; clearInterval(timer); }
+          el.textContent = current + '%';
+        }, 20);
+      }
+    });
+  }, { threshold: 0.5 });
+  obs.observe(el);
+});
+
+// Nav background on scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 50) {
+    nav.classList.add('shadow-lg');
+  } else {
+    nav.classList.remove('shadow-lg');
+  }
+});
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('mobile-menu')?.classList.add('hidden');
+    }
+  });
+});
+
+// Easter Egg 1: Logo click counter
+let logoClicks = 0;
+document.getElementById('logo-egg').addEventListener('click', () => {
+  logoClicks++;
+  const el = document.getElementById('logo-egg');
+  if (logoClicks === 5) {
+    el.textContent = '🚀';
+    el.style.background = '#00DC82';
+    document.body.classList.add('easter-found');
+    setTimeout(() => {
+      el.textContent = 'Q';
+      el.style.background = '#FFE600';
+      document.body.classList.remove('easter-found');
+    }, 3000);
+  } else if (logoClicks === 10) {
+    document.querySelectorAll('.neo-card').forEach((card, i) => {
+      card.style.transition = 'transform 0.5s ease';
+      card.style.transform = `rotate(${(Math.random() - 0.5) * 6}deg)`;
+      setTimeout(() => { card.style.transform = ''; }, 2000);
+    });
+    logoClicks = 0;
+  }
+});
+
+// Easter Egg 2: Konami code
+let konamiIndex = 0;
+const konamiCode = [38,38,40,40,37,39,37,39,66,65];
+document.addEventListener('keydown', (e) => {
+  if (e.keyCode === konamiCode[konamiIndex]) {
+    konamiIndex++;
+    if (konamiIndex === konamiCode.length) {
+      konamiIndex = 0;
+      document.querySelectorAll('.neo-card, .neo-btn').forEach(el => {
+        el.style.transition = 'all 0.5s ease';
+        el.style.boxShadow = '6px 6px 0px 0px #FF6B9D';
+      });
+      document.getElementById('footer-secret').textContent = '🎮 KONAMI CODE ACTIVATED • You found it!';
+      setTimeout(() => {
+        document.querySelectorAll('.neo-card, .neo-btn').forEach(el => { el.style.boxShadow = ''; });
+      }, 4000);
+    }
+  } else {
+    konamiIndex = 0;
+  }
+});
+
+// Easter Egg 3: Secret double-click on footer
+document.getElementById('footer-secret').addEventListener('dblclick', () => {
+  const colors = ['#FFE600', '#FF6B9D', '#0055FF', '#00DC82', '#FF6D00', '#8B5CF6'];
+  document.querySelectorAll('.neo-card').forEach((card, i) => {
+    setTimeout(() => {
+      card.style.transition = 'border-color 0.3s ease';
+      card.style.borderColor = colors[i % colors.length];
+      setTimeout(() => { card.style.borderColor = '#000'; }, 2000);
+    }, i * 100);
+  });
+});
+
+// Parallax on hero shapes
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  if (scrolled < window.innerHeight) {
+    const shapes = document.querySelectorAll('.animate-float, .animate-float-delayed');
+    shapes.forEach((shape, i) => {
+      shape.style.transform = `translateY(${scrolled * (i === 0 ? 0.15 : -0.1)}px)`;
+    });
+  }
+});
+</script>
+
+</body>
+</html>
